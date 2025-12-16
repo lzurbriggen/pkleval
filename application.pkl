@@ -1,0 +1,118 @@
+class Service {
+  enabled: Boolean
+  type: "ClusterIP" | "NodePort" | "LoadBalancer" = "ClusterIP"
+  ports: Listing<ServicePort>?
+}
+
+class ServicePort {
+  name: String
+  port: Int
+  targetPort: Int
+  protocol: "TCP" | "UDP"
+}
+
+class Probe {
+  enabled: Boolean
+  initialDelaySeconds: Int
+  periodSeconds: Int
+  httpGet: ProbeItem?
+  tcpSocket: ProbeItem?
+}
+
+class ProbeItem {
+  port: Int
+  path: String
+}
+
+class HostPath {
+  path: String
+  pathType: "ImplementationSpecific" = "ImplementationSpecific"
+  serviceName: String?
+  servicePort: String?
+}
+
+class Host {
+  host: String
+  paths: Listing<HostPath>
+}
+
+function commonHostName(prefix: String?, suffix: String?) = (if (prefix != null) prefix + "-" else "") + read("env:COMMON_NAME") + (if (suffix != null) "-" + suffix else "")
+
+class Ingress {
+  enabled: Boolean
+  className: "nginx" | "traefik" | "haproxy"
+  annotations: Mapping<String, Any>
+  hosts: Listing<Host>
+}
+
+class Deployment {
+  ports: Listing<DeploymentPort>?
+  readinessProbe: Probe
+  livenessProbe: Probe
+}
+
+class DeploymentPort {
+  name: String
+  containerPort: Int
+  protocol: "TCP" | "UDP"
+}
+
+class Application {
+  enabled: Boolean
+  imagePullSecret: String?
+  replicas: Int = 1
+  services: Listing<Service>
+  deployment: Deployment?
+  ingress: Ingress?
+  resources: Resources?
+}
+
+class Resources {
+  limits: ResourceParams?
+  requests: ResourceParams?
+}
+
+class ResourceParams {
+  cpu: String?
+  memory: DataSize?
+}
+
+application: Application = new {
+  enabled = true
+  imagePullSecret = "registry-credentials"
+  replicas = 1
+  services {
+    new {
+      enabled = true
+      type = "ClusterIP"
+    }
+  }
+  deployment {
+    readinessProbe {
+      enabled = true
+      initialDelaySeconds = 1
+      periodSeconds = 30
+    }
+    livenessProbe {
+      enabled = true
+      initialDelaySeconds = 1
+      periodSeconds = 30
+    }
+  }
+  ingress {
+    enabled = true
+    className = "nginx"
+    annotations {}
+    hosts {
+      new {
+        host = commonHostName("app", null)
+        paths {
+          new {
+            path = "/"
+            pathType = "ImplementationSpecific"
+          }
+        }
+      }
+    }
+  }
+}

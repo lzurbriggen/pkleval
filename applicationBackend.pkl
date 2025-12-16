@@ -1,0 +1,24 @@
+amends "application.pkl"
+
+application {
+  services {
+    [0] {
+      ports {
+        new {
+          name = "http"
+          port = 3000
+          targetPort = 3000
+          protocol = "TCP"
+        }
+      }
+    }
+  }
+  deployment {
+    readinessProbe {
+      httpGet {
+        port = 3000
+        path = "/application/healthy"
+      }
+    }
+  }
+}
