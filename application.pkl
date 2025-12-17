@@ -36,7 +36,10 @@ class Host {
   paths: Listing<HostPath>
 }
 
-function commonHostName(prefix: String?, suffix: String?) = (if (prefix != null) prefix + "-" else "") + read("env:COMMON_NAME") + (if (suffix != null) "-" + suffix else "")
+function commonHostName(prefix: String?, suffix: String?) =
+  (if (prefix != null) prefix + "-" else "")
+    + read("env:COMMON_NAME")
+    + (if (suffix != null) "-" + suffix else "")
 
 class Ingress {
   enabled: Boolean
